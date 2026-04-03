@@ -99,8 +99,8 @@ def update_mood_on_interaction():
         mood_state["last_interaction_time"] = now
         mood_state["interaction_count"] += 1
 
-        # Check pending email notifications for anxiety
-        pending_count = pending_notification_count()
+        # Check pending notifications (use len() directly — GIL-safe for reads)
+        pending_count = len(email_notifications) + len(general_notifications)
         if pending_count > MOOD_PENDING_EMAIL_ANXIETY:
             mood_state["current_mood"] = "surprised"
             print(f"[Mood] → surprised (too many pending notifications: {pending_count})")
@@ -141,8 +141,8 @@ def get_mood():
             mood_state["last_mood_update"] = now
             print(f"[Mood] → sad (decay, no interaction for {gap:.0f}s)")
 
-        # Check pending notifications for anxiety
-        pending_count = pending_notification_count()
+        # Check pending notifications (use len() directly — GIL-safe for reads)
+        pending_count = len(email_notifications) + len(general_notifications)
         if pending_count > MOOD_PENDING_EMAIL_ANXIETY:
             mood_state["current_mood"] = "surprised"
 
@@ -158,7 +158,7 @@ last_email_check = None
 
 def pending_notification_count():
     with notifications_lock:
-        return pending_notification_count()
+        return len(email_notifications) + len(general_notifications)
 
 
 def poll_emails():
